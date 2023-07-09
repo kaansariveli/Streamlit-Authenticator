@@ -27,7 +27,7 @@ if not _RELEASE:
     # creating a login widget
     name, authentication_status, username = authenticator.login('Login', 'main')
     if authentication_status:
-        authenticator.logout('Logout', 'main')
+        authenticator.logout('Çıkış Yap', 'main')
         st.write(f'Welcome *{name}*')
         st.title('Some content')
     elif authentication_status is False:
