@@ -188,11 +188,11 @@ class Authenticate:
                     login_form = st.sidebar.form('Login')
 
                 login_form.subheader(form_name)
-                self.username = login_form.text_input('Username').lower()
+                self.username = login_form.text_input('Kullanıcı adı').lower()
                 st.session_state['username'] = self.username
-                self.password = login_form.text_input('Password', type='password')
+                self.password = login_form.text_input('Şifre', type='password')
 
-                if login_form.form_submit_button('Login'):
+                if login_form.form_submit_button('Oturum açın'):
                     self._check_credentials()
 
         return st.session_state['name'], st.session_state['authentication_status'], st.session_state['username']
@@ -264,11 +264,11 @@ class Authenticate:
         
         reset_password_form.subheader(form_name)
         self.username = username.lower()
-        self.password = reset_password_form.text_input('Current password', type='password')
-        new_password = reset_password_form.text_input('New password', type='password')
-        new_password_repeat = reset_password_form.text_input('Repeat password', type='password')
+        self.password = reset_password_form.text_input('Şifre', type='password')
+        new_password = reset_password_form.text_input('Yeni Şifre password', type='password')
+        new_password_repeat = reset_password_form.text_input('Şifre (Tekrar)', type='password')
 
-        if reset_password_form.form_submit_button('Reset'):
+        if reset_password_form.form_submit_button('Şifre Sıfırla'):
             if self._check_credentials(inplace=False):
                 if len(new_password) > 0:
                     if new_password == new_password_repeat:
@@ -344,12 +344,12 @@ class Authenticate:
 
         register_user_form.subheader(form_name)
         new_email = register_user_form.text_input('Email')
-        new_username = register_user_form.text_input('Username').lower()
-        new_name = register_user_form.text_input('Name')
-        new_password = register_user_form.text_input('Password', type='password')
-        new_password_repeat = register_user_form.text_input('Repeat password', type='password')
+        new_username = register_user_form.text_input('Kullanıcı adı').lower()
+        new_name = register_user_form.text_input('İsim')
+        new_password = register_user_form.text_input('Şifre', type='password')
+        new_password_repeat = register_user_form.text_input('Şifre (Tekrar)', type='password')
 
-        if register_user_form.form_submit_button('Register'):
+        if register_user_form.form_submit_button('Kaydol'):
             if len(new_email) and len(new_username) and len(new_name) and len(new_password) > 0:
                 if new_username not in self.credentials['usernames']:
                     if new_password == new_password_repeat:
@@ -413,9 +413,9 @@ class Authenticate:
             forgot_password_form = st.sidebar.form('Forgot password')
 
         forgot_password_form.subheader(form_name)
-        username = forgot_password_form.text_input('Username').lower()
+        username = forgot_password_form.text_input('Kullanıcı adı').lower()
 
-        if forgot_password_form.form_submit_button('Submit'):
+        if forgot_password_form.form_submit_button('Şifremi Unuttum'):
             if len(username) > 0:
                 if username in self.credentials['usernames']:
                     return username, self.credentials['usernames'][username]['email'], self._set_random_password(username)
@@ -472,7 +472,7 @@ class Authenticate:
         forgot_username_form.subheader(form_name)
         email = forgot_username_form.text_input('Email')
 
-        if forgot_username_form.form_submit_button('Submit'):
+        if forgot_username_form.form_submit_button('Şifremi Unuttum'):
             if len(email) > 0:
                 return self._get_username('email', email), email
             else:
@@ -521,9 +521,9 @@ class Authenticate:
         update_user_details_form.subheader(form_name)
         self.username = username.lower()
         field = update_user_details_form.selectbox('Field', ['Name', 'Email']).lower()
-        new_value = update_user_details_form.text_input('New value')
+        new_value = update_user_details_form.text_input('Yeni değer')
 
-        if update_user_details_form.form_submit_button('Update'):
+        if update_user_details_form.form_submit_button('Güncelle'):
             if len(new_value) > 0:
                 if new_value != self.credentials['usernames'][self.username][field]:
                     self._update_entry(self.username, field, new_value)
