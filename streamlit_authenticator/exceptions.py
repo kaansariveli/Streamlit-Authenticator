@@ -3,7 +3,7 @@ class CredentialsError(Exception):
     Exception raised for incorrect credentials.
     """
     def __init__(self):
-        super().__init__('Username/password is incorrect')
+        super().__init__('Kullanıcı adı/Şifre yanlış')
 
 class ResetError(Exception):
     """
