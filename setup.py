@@ -11,7 +11,7 @@ setuptools.setup(
     description="A secure authentication module to validate user credentials in a Streamlit application.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/mkhorasani/Streamlit-Authenticator",
+    url="https://github.com/kaansariveli/Streamlit-Authenticator",
     packages=setuptools.find_packages(),
     include_package_data=True,
     classifiers=[
