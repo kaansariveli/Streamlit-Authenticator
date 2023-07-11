@@ -265,7 +265,7 @@ class Authenticate:
         reset_password_form.subheader(form_name)
         self.username = username.lower()
         self.password = reset_password_form.text_input('Şifre', type='password')
-        new_password = reset_password_form.text_input('Yeni Şifre password', type='password')
+        new_password = reset_password_form.text_input('Yeni Şifre', type='password')
         new_password_repeat = reset_password_form.text_input('Şifre (Tekrar)', type='password')
 
         if reset_password_form.form_submit_button('Şifre Sıfırla'):
@@ -520,7 +520,7 @@ class Authenticate:
         
         update_user_details_form.subheader(form_name)
         self.username = username.lower()
-        field = update_user_details_form.selectbox('Field', ['Name', 'Email']).lower()
+        field = update_user_details_form.selectbox('Alan', ['Name', 'Email']).lower()
         new_value = update_user_details_form.text_input('Yeni değer')
 
         if update_user_details_form.form_submit_button('Güncelle'):
