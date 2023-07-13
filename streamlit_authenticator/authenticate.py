@@ -44,6 +44,9 @@ class Authenticate:
         self.cookie_manager = stx.CookieManager()
         self.validator = validator if validator is not None else Validator()
 
+        if not st.session_state['authentication_status']:
+            self._check_cookie()
+
         if 'name' not in st.session_state:
             st.session_state['name'] = None
         if 'authentication_status' not in st.session_state:
