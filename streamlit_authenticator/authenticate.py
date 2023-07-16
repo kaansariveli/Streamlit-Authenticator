@@ -10,13 +10,15 @@ from .utils import generate_random_pw
 
 from .exceptions import CredentialsError, ForgotError, RegisterError, ResetError, UpdateError
 
+
 class Authenticate:
     """
     This class will create login, logout, register user, reset password, forgot password, 
     forgot username, and modify user details widgets.
     """
-    def __init__(self, credentials: dict, cookie_name: str, key: str, cookie_expiry_days: float=30.0, 
-        preauthorized: list=None, validator: Validator=None):
+
+    def __init__(self, credentials: dict, cookie_name: str, key: str, cookie_expiry_days: float = 30.0,
+                 preauthorized: list = None, validator: Validator = None):
         """
         Create a new instance of "Authenticate".
 
@@ -44,8 +46,10 @@ class Authenticate:
         self.cookie_manager = stx.CookieManager()
         self.validator = validator if validator is not None else Validator()
 
-        if not st.session_state['authentication_status']:
+        try:
             self._check_cookie()
+        except KeyError:
+            st.session_state['logout'] = None
 
         if 'name' not in st.session_state:
             st.session_state['name'] = None
@@ -65,9 +69,9 @@ class Authenticate:
         str
             The JWT cookie for passwordless reauthentication.
         """
-        return jwt.encode({'name':st.session_state['name'],
-            'username':st.session_state['username'],
-            'exp_date':self.exp_date}, self.key, algorithm='HS256')
+        return jwt.encode({'name': st.session_state['name'],
+                           'username': st.session_state['username'],
+                           'exp_date': self.exp_date}, self.key, algorithm='HS256')
 
     def _token_decode(self) -> str:
         """
@@ -103,8 +107,8 @@ class Authenticate:
         bool
             The validity of the entered password by comparing it to the hashed password on disk.
         """
-        return bcrypt.checkpw(self.password.encode(), 
-            self.credentials['usernames'][self.username]['password'].encode())
+        return bcrypt.checkpw(self.password.encode(),
+                              self.credentials['usernames'][self.username]['password'].encode())
 
     def _check_cookie(self):
         """
@@ -120,8 +124,8 @@ class Authenticate:
                             st.session_state['name'] = self.token['name']
                             st.session_state['username'] = self.token['username']
                             st.session_state['authentication_status'] = True
-    
-    def _check_credentials(self, inplace: bool=True) -> bool:
+
+    def _check_credentials(self, inplace: bool = True) -> bool:
         """
         Checks the validity of the entered credentials.
 
@@ -143,7 +147,7 @@ class Authenticate:
                         self.exp_date = self._set_exp_date()
                         self.token = self._token_encode()
                         self.cookie_manager.set(self.cookie_name, self.token,
-                            expires_at=datetime.now() + timedelta(days=self.cookie_expiry_days))
+                                                expires_at=datetime.now() + timedelta(days=self.cookie_expiry_days))
                         st.session_state['authentication_status'] = True
                     else:
                         return True
@@ -160,7 +164,7 @@ class Authenticate:
             else:
                 return False
 
-    def login(self, form_name: str, location: str='main') -> tuple:
+    def login(self, form_name: str, location: str = 'main') -> tuple:
         """
         Creates a login widget.
 
@@ -190,17 +194,19 @@ class Authenticate:
                 elif location == 'sidebar':
                     login_form = st.sidebar.form('Login')
 
-                login_form.subheader(form_name)
-                self.username = login_form.text_input('Kullanıcı adı').lower()
+                # login_form.subheader(form_name)
+                self.username = login_form.text_input('Kullanıcı adı', placeholder="Kullanıcı adı",
+                                                      label_visibility="collapsed").lower()
                 st.session_state['username'] = self.username
-                self.password = login_form.text_input('Şifre', type='password')
+                self.password = login_form.text_input('Şifre', placeholder="Şifre", label_visibility="collapsed",
+                                                      type='password')
 
                 if login_form.form_submit_button('Oturum açın'):
                     self._check_credentials()
 
         return st.session_state['name'], st.session_state['authentication_status'], st.session_state['username']
 
-    def logout(self, button_name: str, location: str='main', key: str=None):
+    def logout(self, button_name: str, location: str = 'main', key: str = None):
         """
         Creates a logout button.
 
@@ -241,7 +247,7 @@ class Authenticate:
         """
         self.credentials['usernames'][username]['password'] = Hasher([password]).generate()[0]
 
-    def reset_password(self, username: str, form_name: str, location: str='main') -> bool:
+    def reset_password(self, username: str, form_name: str, location: str = 'main') -> bool:
         """
         Creates a password reset widget.
 
@@ -264,18 +270,21 @@ class Authenticate:
             reset_password_form = st.form('Reset password')
         elif location == 'sidebar':
             reset_password_form = st.sidebar.form('Reset password')
-        
+
         reset_password_form.subheader(form_name)
         self.username = username.lower()
-        self.password = reset_password_form.text_input('Şifre', type='password')
-        new_password = reset_password_form.text_input('Yeni Şifre', type='password')
-        new_password_repeat = reset_password_form.text_input('Şifre (Tekrar)', type='password')
+        self.password = reset_password_form.text_input('Şifre', type='password', placeholder="Şifre",
+                                                       label_visibility="collapsed")
+        new_password = reset_password_form.text_input('Yeni Şifre', type='password', placeholder="Yeni Şifre",
+                                                      label_visibility="collapsed")
+        new_password_repeat = reset_password_form.text_input('Şifre (Tekrar)', type='password',
+                                                             placeholder="Şifre (Tekrar)", label_visibility="collapsed")
 
         if reset_password_form.form_submit_button('Şifre Sıfırla'):
             if self._check_credentials(inplace=False):
                 if len(new_password) > 0:
                     if new_password == new_password_repeat:
-                        if self.password != new_password: 
+                        if self.password != new_password:
                             self._update_password(self.username, new_password)
                             return True
                         else:
@@ -286,7 +295,7 @@ class Authenticate:
                     raise ResetError('No new password provided')
             else:
                 raise CredentialsError
-    
+
     def _register_credentials(self, username: str, name: str, password: str, email: str, preauthorization: bool):
         """
         Adds to credentials dictionary the new user's information.
@@ -312,12 +321,12 @@ class Authenticate:
         if not self.validator.validate_email(email):
             raise RegisterError('Email is not valid')
 
-        self.credentials['usernames'][username] = {'name': name, 
-            'password': Hasher([password]).generate()[0], 'email': email}
+        self.credentials['usernames'][username] = {'name': name,
+                                                   'password': Hasher([password]).generate()[0], 'email': email}
         if preauthorization:
             self.preauthorized['emails'].remove(email)
 
-    def register_user(self, form_name: str, location: str='main', preauthorization=True) -> bool:
+    def register_user(self, form_name: str, location: str = 'main', preauthorization=True) -> bool:
         """
         Creates a password reset widget.
 
@@ -346,11 +355,14 @@ class Authenticate:
             register_user_form = st.sidebar.form('Register user')
 
         register_user_form.subheader(form_name)
-        new_email = register_user_form.text_input('Email')
-        new_username = register_user_form.text_input('Kullanıcı adı').lower()
-        new_name = register_user_form.text_input('İsim')
-        new_password = register_user_form.text_input('Şifre', type='password')
-        new_password_repeat = register_user_form.text_input('Şifre (Tekrar)', type='password')
+        new_email = register_user_form.text_input('Email', placeholder="Email", label_visibility="collapsed")
+        new_username = register_user_form.text_input('Kullanıcı adı', placeholder="Kullanıcı adı",
+                                                     label_visibility="collapsed").lower()
+        new_name = register_user_form.text_input('İsim', placeholder="İsim", label_visibility="collapsed")
+        new_password = register_user_form.text_input('Şifre', type='password', placeholder="Şifre",
+                                                     label_visibility="collapsed")
+        new_password_repeat = register_user_form.text_input('Şifre (Tekrar)', type='password',
+                                                            placeholder="Şifre (Tekrar)", label_visibility="collapsed")
 
         if register_user_form.form_submit_button('Kaydol'):
             if len(new_email) and len(new_username) and len(new_name) and len(new_password) > 0:
@@ -358,12 +370,14 @@ class Authenticate:
                     if new_password == new_password_repeat:
                         if preauthorization:
                             if new_email in self.preauthorized['emails']:
-                                self._register_credentials(new_username, new_name, new_password, new_email, preauthorization)
+                                self._register_credentials(new_username, new_name, new_password, new_email,
+                                                           preauthorization)
                                 return True
                             else:
                                 raise RegisterError('User not preauthorized to register')
                         else:
-                            self._register_credentials(new_username, new_name, new_password, new_email, preauthorization)
+                            self._register_credentials(new_username, new_name, new_password, new_email,
+                                                       preauthorization)
                             return True
                     else:
                         raise RegisterError('Passwords do not match')
@@ -389,7 +403,7 @@ class Authenticate:
         self.credentials['usernames'][username]['password'] = Hasher([self.random_password]).generate()[0]
         return self.random_password
 
-    def forgot_password(self, form_name: str, location: str='main') -> tuple:
+    def forgot_password(self, form_name: str, location: str = 'main') -> tuple:
         """
         Creates a forgot password widget.
 
@@ -421,7 +435,8 @@ class Authenticate:
         if forgot_password_form.form_submit_button('Şifremi Unuttum'):
             if len(username) > 0:
                 if username in self.credentials['usernames']:
-                    return username, self.credentials['usernames'][username]['email'], self._set_random_password(username)
+                    return username, self.credentials['usernames'][username]['email'], self._set_random_password(
+                        username)
                 else:
                     return False, None, None
             else:
@@ -448,7 +463,7 @@ class Authenticate:
                 return username
         return False
 
-    def forgot_username(self, form_name: str, location: str='main') -> tuple:
+    def forgot_username(self, form_name: str, location: str = 'main') -> tuple:
         """
         Creates a forgot username widget.
 
@@ -497,7 +512,7 @@ class Authenticate:
         """
         self.credentials['usernames'][username][key] = value
 
-    def update_user_details(self, username: str, form_name: str, location: str='main') -> bool:
+    def update_user_details(self, username: str, form_name: str, location: str = 'main') -> bool:
         """
         Creates a update user details widget.
 
@@ -520,10 +535,10 @@ class Authenticate:
             update_user_details_form = st.form('Update user details')
         elif location == 'sidebar':
             update_user_details_form = st.sidebar.form('Update user details')
-        
+
         update_user_details_form.subheader(form_name)
         self.username = username.lower()
-        field = update_user_details_form.selectbox('Alan', ['Name', 'Email']).lower()
+        field = update_user_details_form.selectbox('Alan', ['Kullanıcı adı', 'Email']).lower()
         new_value = update_user_details_form.text_input('Yeni değer')
 
         if update_user_details_form.form_submit_button('Güncelle'):
@@ -531,11 +546,11 @@ class Authenticate:
                 if new_value != self.credentials['usernames'][self.username][field]:
                     self._update_entry(self.username, field, new_value)
                     if field == 'name':
-                            st.session_state['name'] = new_value
-                            self.exp_date = self._set_exp_date()
-                            self.token = self._token_encode()
-                            self.cookie_manager.set(self.cookie_name, self.token,
-                            expires_at=datetime.now() + timedelta(days=self.cookie_expiry_days))
+                        st.session_state['name'] = new_value
+                        self.exp_date = self._set_exp_date()
+                        self.token = self._token_encode()
+                        self.cookie_manager.set(self.cookie_name, self.token,
+                                                expires_at=datetime.now() + timedelta(days=self.cookie_expiry_days))
                     return True
                 else:
                     raise UpdateError('New and current values are the same')
